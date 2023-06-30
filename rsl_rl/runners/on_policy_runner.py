@@ -206,24 +206,30 @@ class OnPolicyRunner:
                        f"""{'Total timesteps:':>{pad}} {self.tot_timesteps}\n"""
                        f"""{'Iteration time:':>{pad}} {iteration_time:.2f}s\n"""
                        f"""{'Total time:':>{pad}} {self.tot_time:.2f}s\n"""
-                       f"""{'ETA:':>{pad}} {self.tot_time / (locs['it'] + 1) * (
-                               locs['num_learning_iterations'] - locs['it']):.1f}s\n""")
+                       f"""{'ETA:':>{pad}} {self.tot_time / (locs['it'] -  self.current_learning_iteration + 1) * (
+                               self.current_learning_iteration + locs['num_learning_iterations'] - locs['it']):.1f}s\n""")
         print(log_string)
 
-    def save(self, path, infos=None):
-        torch.save({
+    def export(self, infos=None):
+        return {
             'model_state_dict': self.alg.actor_critic.state_dict(),
             'optimizer_state_dict': self.alg.optimizer.state_dict(),
             'iter': self.current_learning_iteration,
             'infos': infos,
-            }, path)
+            }
 
-    def load(self, path, load_optimizer=True):
-        loaded_dict = torch.load(path)
+    def save(self, path, infos=None):
+        torch.save(self.export(infos), path)
+
+    def load_dict(self, loaded_dict, load_optimizer=True):
         self.alg.actor_critic.load_state_dict(loaded_dict['model_state_dict'])
         if load_optimizer:
             self.alg.optimizer.load_state_dict(loaded_dict['optimizer_state_dict'])
         self.current_learning_iteration = loaded_dict['iter']
+
+    def load(self, path, load_optimizer=True):
+        loaded_dict = torch.load(path)
+        self.load_dict(loaded_dict, load_optimizer)
         return loaded_dict['infos']
 
     def get_inference_policy(self, device=None):

@@ -55,29 +55,11 @@ class ActorCritic(nn.Module):
         mlp_input_dim_c = num_critic_obs
 
         # Policy
-        actor_layers = []
-        actor_layers.append(nn.Linear(mlp_input_dim_a, actor_hidden_dims[0]))
-        actor_layers.append(activation)
-        for l in range(len(actor_hidden_dims)):
-            if l == len(actor_hidden_dims) - 1:
-                actor_layers.append(nn.Linear(actor_hidden_dims[l], num_actions))
-            else:
-                actor_layers.append(nn.Linear(actor_hidden_dims[l], actor_hidden_dims[l + 1]))
-                actor_layers.append(activation)
-        self.actor = nn.Sequential(*actor_layers)
+        self.actor = create_network(activation, mlp_input_dim_a, num_actions, actor_hidden_dims)
 
         # Value function
-        critic_layers = []
-        critic_layers.append(nn.Linear(mlp_input_dim_c, critic_hidden_dims[0]))
-        critic_layers.append(activation)
-        for l in range(len(critic_hidden_dims)):
-            if l == len(critic_hidden_dims) - 1:
-                critic_layers.append(nn.Linear(critic_hidden_dims[l], 1))
-            else:
-                critic_layers.append(nn.Linear(critic_hidden_dims[l], critic_hidden_dims[l + 1]))
-                critic_layers.append(activation)
-        self.critic = nn.Sequential(*critic_layers)
-
+        self.critic = create_network(activation, mlp_input_dim_c, 1, critic_hidden_dims)
+        
         print(f"Actor MLP: {self.actor}")
         print(f"Critic MLP: {self.critic}")
 
@@ -134,6 +116,18 @@ class ActorCritic(nn.Module):
     def evaluate(self, critic_observations, **kwargs):
         value = self.critic(critic_observations)
         return value
+
+def create_network(activation, input_dim, output_dim, hidden_dims):
+    layers = []
+    layers.append(nn.Linear(input_dim, hidden_dims[0]))
+    layers.append(activation)
+    for l in range(len(hidden_dims)):
+        if l == len(hidden_dims) - 1:
+            layers.append(nn.Linear(hidden_dims[l], output_dim))
+        else:
+            layers.append(nn.Linear(hidden_dims[l], hidden_dims[l + 1]))
+            layers.append(activation)
+    return nn.Sequential(*layers)
 
 def get_activation(act_name):
     if act_name == "elu":
