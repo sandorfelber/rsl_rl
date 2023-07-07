@@ -228,7 +228,7 @@ class OnPolicyRunner:
         self.current_learning_iteration = loaded_dict['iter']
 
     def load(self, path, load_optimizer=True):
-        loaded_dict = torch.load(path)
+        loaded_dict = torch.load(path, map_location=self.device)
         self.load_dict(loaded_dict, load_optimizer)
         return loaded_dict['infos']
 
