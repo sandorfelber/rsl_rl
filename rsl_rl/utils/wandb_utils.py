@@ -2,9 +2,12 @@
 #  SPDX-License-Identifier: BSD-3-Clause
 
 from __future__ import annotations
-
-import os
+import sys
+sys.path.insert(0, '/home/sandor/robots_ws/legged_gym/legged_gym/scripts')
+from train import train as training_function
+import os, subprocess
 from dataclasses import asdict
+from datetime import datetime
 from torch.utils.tensorboard import SummaryWriter
 
 try:
@@ -33,8 +36,22 @@ class WandbSummaryWriter(SummaryWriter):
 
         wandb.init(project=project, entity=entity)
 
-        # Change generated name to project-number format
-        wandb.run.name = project + wandb.run.name.split("-")[-1]
+        # Fetch Git Branch Name
+        branch_name = subprocess.check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"]).decode().strip()
+        # Fetch Last Commit Message
+        last_commit = subprocess.check_output(["git", "log", "-1", "--pretty=%B"]).decode().strip()
+
+        # Format the time
+        time_of_launch = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+
+        # Attempt to get Docker pod name
+        pod_name = os.environ.get("HOSTNAME", "")
+
+        # Conditionally prepend Docker pod name
+        formatted_pod_name = f"{pod_name}_" if pod_name else ""
+
+        # Use backslashes to escape quotes and format the name
+        wandb.run.name = f'{formatted_pod_name}{branch_name}_"{last_commit}"_{time_of_launch}'
 
         self.name_map = {
             "Train/mean_reward/time": "Train/mean_reward_time",
@@ -44,6 +61,43 @@ class WandbSummaryWriter(SummaryWriter):
         run_name = os.path.split(log_dir)[-1]
 
         wandb.log({"log_dir": run_name})
+
+    # sweep_config = {
+    #     'method': 'random', #grid, random
+    #     "name": "sweep",
+    #     'metric': {
+    #     'name': 'Loss/value_function',
+    #     'goal': 'minimize'   
+    #     },
+    #     'parameters': {
+    #         'num_learning_epochs': {
+    #             'values': [2, 5, 10]
+    #         },
+    #         'learning_rate': {
+    #             'values': [1e-2, 1e-3, 1e-4, 3e-4, 3e-5, 1e-5]
+    #         },
+    #         'lam':{
+    #             'values':[0.9, 0.925, 0.95, 0.975, 0.99]
+    #         },
+    #     'gamma':{
+    #             'values':[0.975, 0.98, 0.985, 0.99, 0.995]
+    #         },
+    #         'num_mini_batches': {
+    #             'values': [1, 2, 4, 8, 16]
+    #         },
+    #         'desired_kl': {
+    #             'values': [0.01, 0.02, 0.03, 0.04, 0.05]
+    #         },
+    #         'optimizer': {
+    #             'values': ['adam', 'sgd']
+    #         },
+    #     }
+    # }
+
+    # # # 3: Start the sweep
+    # sweep_id = wandb.sweep(sweep=sweep_config, project="legged_project")
+    
+    # wandb.agent(sweep_id, function=training_function, count=100)
 
     def store_config(self, env_cfg, runner_cfg, alg_cfg, policy_cfg):
         wandb.config.update({"runner_cfg": runner_cfg})
