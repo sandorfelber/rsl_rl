@@ -56,7 +56,7 @@ class WandbSummaryWriter(SummaryWriter):
         pod_name = pod_name_mappings.get(container_id, "")  # Default to empty string if not found
 
         # Conditionally prepend Docker pod name
-        formatted_pod_name = f"{pod_name}_" if pod_name else ""
+        formatted_pod_name = f"{pod_name}" if pod_name else ""
         
         # Use backslashes to escape quotes and format the name
         wandb.run.name = f'{formatted_pod_name}_{branch_name}_"{last_commit}"_{time_of_launch}'
