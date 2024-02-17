@@ -44,14 +44,23 @@ class WandbSummaryWriter(SummaryWriter):
         # Format the time
         time_of_launch = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
+        # Mapping of Docker pod names (container IDs) to human-readable names
+        pod_name_mappings = {
+            "b34c821b687c": "isaac",
+            "00f93cd367c4": "solod",
+            "b746446c1f0b": "quattro"
+        }
+        
         # Attempt to get Docker pod name
-        pod_name = os.environ.get("HOSTNAME", "")
+        container_id = os.environ.get("HOSTNAME", "")
+        pod_name = pod_name_mappings.get(container_id, "")  # Default to empty string if not found
 
         # Conditionally prepend Docker pod name
         formatted_pod_name = f"{pod_name}_" if pod_name else ""
-
+        
         # Use backslashes to escape quotes and format the name
-        wandb.run.name = f'{formatted_pod_name}{branch_name}_"{last_commit}"_{time_of_launch}'
+        wandb.run.name = f'{formatted_pod_name}_{branch_name}_"{last_commit}"_{time_of_launch}'
+
 
         self.name_map = {
             "Train/mean_reward/time": "Train/mean_reward_time",
