@@ -44,12 +44,10 @@ class WandbSummaryWriter(SummaryWriter):
         # Format the time
         time_of_launch = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
-        # Attempt to get Docker pod name
-        pod_name = os.environ.get("HOSTNAME", "")
-
-        # Conditionally prepend Docker pod name
+        # Attempt to get Kubernetes Pod Name
+        pod_name = os.environ.get("POD_NAME", "")
         formatted_pod_name = f"{pod_name}_" if pod_name else ""
-
+        
         # Use backslashes to escape quotes and format the name
         wandb.run.name = f'{formatted_pod_name}{branch_name}_"{last_commit}"_{time_of_launch}'
 
