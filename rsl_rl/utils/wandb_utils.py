@@ -46,9 +46,10 @@ class WandbSummaryWriter(SummaryWriter):
 
         # Mapping of Docker pod names (container IDs) to human-readable names
         pod_name_mappings = {
-            "b34c821b687c": "isaac",
-            "00f93cd367c4": "solod",
-            "b746446c1f0b": "quattro"
+            "9a6d760de3db": "isaac",
+            "90e979582683": "solod",
+            "5698c0583017": "quattro",
+            "4277d4343f1f": "debug"
         }
         
         # Attempt to get Docker pod name
